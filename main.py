@@ -78,9 +78,9 @@ for x in x_range:
         mf2 = np.exp((-(x_temp-m2)**2)/(2*de2**2))
         mf3 = np.exp((-(x_temp-m3)**2)/(2*de3**2))
           
-        mf4 = np.exp((-(x_temp-m4)**2)/(2*de4**2))
-        mf5 = np.exp((-(x_temp-m5)**2)/(2*de5**2))
-        mf6 = np.exp((-(x_temp-m6)**2)/(2*de6**2))
+        mf4 = np.exp((-(y_temp-m4)**2)/(2*de4**2))
+        mf5 = np.exp((-(y_temp-m5)**2)/(2*de5**2))
+        mf6 = np.exp((-(y_temp-m6)**2)/(2*de6**2))
           
         inf1 = mf1 * mf4
         inf2 = mf1 * mf5
