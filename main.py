@@ -22,7 +22,7 @@ x_labels, y_labels = data.axes
 ############### Generate Aproximation Data ###############
 #from numpy import sin, cos, exp
 m1=0;
-m2=.5;
+m2=0.5;
 m3=1;
 
 m4=0;
@@ -40,21 +40,21 @@ de6=0.25;
 p1=0;
 p2=0;
 p3=0;
-p4=10;
+p4=100;
 p5=0;
 p6=0;
 p7=0;
 p8=0;
 p9=0;
 
-q1=10;
+q1=0;
 q2=0;
 q3=0;
-q4=50;
-q5=0;
+q4=0;
+q5=100;
 q6=0;
 q7=0;
-q8=20;
+q8=0;
 q9=0;
 
 r1=0;
@@ -65,7 +65,7 @@ r5=0;
 r6=0;
 r7=0;
 r8=0;
-r9=30;
+r9=0;
 
 points = np.zeros(z.shape)
 
@@ -77,7 +77,6 @@ for x in x_range:
         mf1 = np.exp((-(x_temp-m1)**2)/(2*de1**2))
         mf2 = np.exp((-(x_temp-m2)**2)/(2*de2**2))
         mf3 = np.exp((-(x_temp-m3)**2)/(2*de3**2))
-          
         mf4 = np.exp((-(y_temp-m4)**2)/(2*de4**2))
         mf5 = np.exp((-(y_temp-m5)**2)/(2*de5**2))
         mf6 = np.exp((-(y_temp-m6)**2)/(2*de6**2))
