@@ -113,10 +113,46 @@ def curve(x_range, y_range, c):
 
     return points[X, Y]
 
+def get_mf(x_range, y_range, c):
+    m1=c[0];
+    m2=c[1];
+    m3=c[2];
+    m4=c[3];
+    m5=c[4];
+    m6=c[5];
+    de1=c[6] or 0.01;
+    de2=c[7] or 0.01;
+    de3=c[8] or 0.01;
+    de4=c[9] or 0.01;
+    de5=c[10] or 0.01;
+    de6=c[11] or 0.01;
+    
+    mf1 = []
+    mf2 = []
+    mf3 = []
+    mf4 = []
+    mf5 = []
+    mf6 = []
+    for x in x_range:
+        x_temp = x / x_range[-1];
+        
+        mf1.append(np.exp(( -(x_temp - m1)**2) / (2 * de1**2)))
+        mf2.append(np.exp(( -(x_temp - m2)**2) / (2 * de2**2)))
+        mf3.append(np.exp(( -(x_temp - m3)**2) / (2 * de3**2)))
+        
+    for y in y_range:
+        y_temp = y / y_range[-1];
+        
+        mf4.append(np.exp(( -(y_temp - m4)**2) / (2 * de4**2)))
+        mf5.append(np.exp(( -(y_temp - m5)**2) / (2 * de5**2)))
+        mf6.append(np.exp(( -(y_temp - m6)**2) / (2 * de6**2)))
+
+    return (mf1, mf2, mf3, mf4, mf5, mf6)
+
 # Returns the chromsomes values decoded by w
 def decoded_values(chromosome_values, w):
     return [x / 255 for x in chromosome_values[:6]] \
-        + [x / 25.5 for x in chromosome_values[6:12]] \
+        + [x / 255 for x in chromosome_values[6:12]] \
         + [x / w for x in chromosome_values[12:]]
 
 # Sets the aptitude value of a chromosome (Area between the curve and the original curve)
@@ -192,6 +228,130 @@ def mutate(chromosome):
         values[position] = values[position] ^ mask
     chromosome['values'] = values
 
+def print_plots(x_range, y_range, original_curve, aprox_curve, aptitudes, c_values, use_plotly = False, use_inline = True):
+    
+    X, Y = np.meshgrid(x_range, y_range)
+    
+    if use_plotly:
+        
+        import plotly.graph_objects as go
+        from plotly.subplots import make_subplots
+        
+        # Initialize figure with 4 3D subplots
+        fig = make_subplots(
+            rows=1, cols=2,
+            specs=[[{'type': 'surface'}, {'type': 'xy'}]])
+        
+        fig.add_trace(
+            go.Surface(z=aprox_curve, x=X, y=Y, colorscale='viridis', opacity=0.75),
+            row=1, col=1)
+        
+        fig.add_trace(
+            go.Surface(z=original_curve, x=X, y=Y),
+            row=1, col=1)
+        
+        fig.add_trace(
+            go.Scatter(x=np.arange(len(aptitudes)), y=aptitudes),
+            row=1, col=2)
+
+
+        #fig = go.Figure(data=[
+        #    go.Surface(z=aprox_curve, x=X, y=Y, colorscale="viridis", opacity=0.5),
+        #    go.Surface(z=original_curve, x=X, y=Y, colorscale="viridis", opacity=1)
+        #    ])
+
+        fig.update_layout(title = 'Ocupation',
+                          autosize = True,
+                          margin = dict(l=65, r=50, b=65, t=90),
+                          scene = dict(
+                              xaxis = dict(
+                                  showticklabels = False,
+                                  ticktext = x_labels,
+                                  tickvals = x_range,
+                                  title = dict(
+                                      text = 'Fecha')
+                                  ),
+                              yaxis = dict(
+                                  showaxeslabels = False,
+                                  ticktext = y_labels,
+                                  tickvals = y_range,
+                                  title = dict(
+                                      text = '')
+                                  ),
+                              zaxis = dict(
+                                  ticks='outside',
+                                  ticksuffix='%',
+                                  title = dict(
+                                      text = 'Population')
+                                  ),
+                              ),
+                          )
+        
+        if use_inline:
+            display.clear_output(wait = True)
+            fig.show()
+        else:
+            fig.show(renderer="browser")
+    else:
+        import matplotlib.patheffects as path_effects
+        
+        if use_inline:
+            matplotlib.use('module://matplotlib_inline.backend_inline')
+        else:
+            matplotlib.use('Qt5Agg')
+        
+        #fig = plt.figure()
+        fig = plt.figure(figsize = (18, 8))
+        
+        # -------------- 3D surface
+        ax1 = fig.add_subplot(2, 2, 1, projection='3d')
+        ax1.set_xlabel('Fecha')
+        ax1.set_xticklabels(x_labels)
+        ax1.set_ylabel('')
+        ax1.set_yticks(y_range)
+        ax1.set_yticklabels(y_labels)
+        ax1.set_zlabel('Population %')
+    
+        # Plot the surface.
+        ax1.plot_surface(X, Y, original_curve, cmap=plt.cm.viridis, alpha=1)
+        ax1.plot_surface(X, Y, aprox_curve, cmap=plt.cm.viridis, alpha=0.75)
+        
+        # -------------- Aptitude curve
+        ax2 = fig.add_subplot(2,2,2)
+        ax2.clear()
+        ax2.plot(aptitudes, linewidth=2, color='royalblue', label='Aptitude of generation ' + str(i + 1), path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
+        ax2.grid(linestyle='--')
+        ax2.legend()
+        ax2.set_xlabel('Generation')
+        ax2.set_ylabel('Aptitude')
+        ax2.title.set_text("Aptitude: {:.2f}".format(aptitudes[i]))
+        
+        # -------------- Aptitude curve
+        (mf1, mf2, mf3, mf4, mf5, mf6) = get_mf(x_range, y_range, c_values)
+        ax3 = fig.add_subplot(2,2,3)
+        ax3.clear()
+        ax3.plot(mf1, linewidth=2, label='mf1', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
+        ax3.plot(mf2, linewidth=2, label='mf2', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
+        ax3.plot(mf3, linewidth=2, label='mf3', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
+        ax3.set_xlabel('Fecha (x)')
+        ax3.set_ylabel('Population (z)')
+        ax3.legend()
+        
+        ax4 = fig.add_subplot(2,2,4)
+        ax4.clear()
+        ax4.plot(mf4, linewidth=2, label='mf4', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
+        ax4.plot(mf5, linewidth=2, label='mf5', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
+        ax4.plot(mf6, linewidth=2, label='mf6', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
+        ax4.set_xlabel('Clases (y)')
+        ax4.set_ylabel('Population (z)')
+        ax4.legend()
+        
+        # Add a color bar which maps values to colors.
+        #fig.colorbar(surf, shrink=0.5, aspect=5)
+        if use_inline:
+          display.clear_output(wait = True)
+        
+        plt.show()
 
 ############### Read Original Data ###############
 import pandas as pd
@@ -199,8 +359,8 @@ import numpy as np
 (x_range, y_range, x_labels, y_labels, X, Y, Z) = data_curve()
 
 # ----------------------------- Variable Initialization ----------------------------- 
-num_of_chromosomes = 1000           # Equals to the number of chromosomes per population
-num_of_generations = 100            # Number of generations to reproduce
+num_of_chromosomes = 100           # Equals to the number of chromosomes per population
+num_of_generations = 30            # Number of generations to reproduce
 num_of_genes = 39                   # Equals to the number of genes
 percentage_of_opponents = 0.05      # Percentage of chromosomes from the population to compite
 weight = 255 / Z.max()              # To set a max value of our data
@@ -217,6 +377,7 @@ best_chromosomes = []
 
 # Visualization variables
 use_inline = True
+animate = False
 
 # ----------------------------- Program Start ----------------------------- 
 
@@ -266,7 +427,6 @@ for i in range(num_of_generations):
         calculate_aptitude(x_range, y_range, new_generation[j], Z, weight)
     
     # Select elitism
-    
     if allow_elitism:
         elitism = sorted(new_generation + generation, key=lambda c : c['aptitude'])
         new_generation = elitism[:num_of_chromosomes]
@@ -279,107 +439,86 @@ for i in range(num_of_generations):
     
     if use_inline:
         best_curve = curve(x_range, y_range, decoded_values(best_chromosome_of_generation['values'], weight))
+        print_plots(x_range, y_range, Z, best_curve, aptitudes, decoded_values(best_chromosome_of_generation['values'], weight), use_plotly=False, use_inline=use_inline)
         
-        matplotlib.use('module://matplotlib_inline.backend_inline')
-        
-        #fig = plt.figure()
-        fig = plt.figure(figsize = (18, 8))
-        
-        #ax = fig.gca(projection='3d')
-        ax1 = fig.add_subplot(1, 2, 1, projection='3d')
-        ax1.set_xlabel('Fecha')
-        ax1.set_xticklabels(x_labels)
-        ax1.set_ylabel('')
-        ax1.set_yticks(y_range)
-        ax1.set_yticklabels(y_labels)
-        ax1.set_zlabel('Population %')
-    
-        # Plot the surface.
-        surf = ax1.plot_surface(X, Y, Z, cmap=plt.cm.viridis, alpha=1)
-        surf_aprox = ax1.plot_surface(X, Y, best_curve, cmap=plt.cm.inferno, alpha=0.5)
-        
-        ax2 = fig.add_subplot(1,2,2)
-        ax2.clear()
-        ax2.plot(aptitudes, linewidth=2, color='royalblue', alpha=0.5, label='Aptitude of generation' + str(i + 1))
-        ax2.grid(linestyle='--')
-        ax2.legend()
-        ax2.set_xlabel('Generation')
-        ax2.set_ylabel('Aptitude')
-        ax2.title.set_text("Aptitude: {:.2f}".format(aptitudes[i]))
-        
-        # Add a color bar which maps values to colors.
-        #fig.colorbar(surf, shrink=0.5, aspect=5)
-        display.clear_output(wait = True)
-        
-        
-        plt.show()
-        print('Generation', i + 1, 'of', num_of_generations)
-        print('Best:', best_chromosome_of_generation)
-        print('Decoded:', decoded_values(best_chromosome_of_generation['values'], weight))
+    print('Generation', i + 1, 'of', num_of_generations)
+    print('Best:', best_chromosome_of_generation)
+    print('Decoded:', decoded_values(best_chromosome_of_generation['values'], weight))
     
     generation = new_generation
+    
+#print_plots(x_range, y_range, Z, best_curve, aptitudes, best_chromosome_of_generation, use_plotly=True, use_inline=False)
 
-sys.exit(0)
-
-############### Plot Data ###############
-use_plotly = False
-use_inline = False
-
-if use_plotly:
+############### Animate ###############
+if animate:
     import plotly.graph_objects as go
-    fig = go.Figure(data=[
-        go.Surface(z=best_curve, x=X, y=Y, colorscale="inferno", opacity=0.5),
-        go.Surface(z=Z, x=X, y=Y, colorscale="viridis", opacity=1)
-        ])
-    fig.update_layout(title = 'Ocupation',
-                      autosize = True,
-                      margin = dict(l=65, r=50, b=65, t=90),
-                      scene = dict(
-                          xaxis = dict(
-                              showticklabels = False,
-                              ticktext = x_labels,
-                              tickvals = x_range,
-                              title = dict(
-                                  text = 'Fecha')
-                              ),
-                          yaxis = dict(
-                              showaxeslabels = False,
-                              ticktext = y_labels,
-                              tickvals = y_range,
-                              title = dict(
-                                  text = '')
-                              ),
-                          zaxis = dict(
-                              ticks='outside',
-                              ticksuffix='%',
-                              title = dict(
-                                  text = 'Population')
-                              ),
-                          ),
-                      )
-    fig.show(renderer="browser")
-else:
+    
+    # Define frames
+    X, Y = np.meshgrid(x_range, y_range)
+    nb_frames = num_of_generations
+    fig = go.Figure(frames=[go.Frame(
+        data= [
+            go.Surface(x=X, y=Y, z = curve(x_range, y_range, decoded_values(best_chromosomes[k], weight)), colorscale='viridis', opacity=0.75),
+            go.Surface(z=Z, x=X, y=Y)
+            ],
+        name=str(k) # you need to name the frame for the animation to behave properly
+        )
+        for k in range(nb_frames)])
+    
+    # Add data to be displayed before animation starts
+    fig.add_trace(
+        go.Surface(x=X, y=Y, z = curve(x_range, y_range, decoded_values(best_chromosomes[0], weight)), colorscale='viridis', opacity=0.75))
+     
+    fig.add_trace(
+        go.Surface(z=Z, x=X, y=Y))
+    
+    def frame_args(duration):
+        return {
+                "frame": {"duration": duration},
+                "mode": "immediate",
+                "fromcurrent": True,
+                "transition": {"duration": duration, "easing": "linear"},}
+    
+    sliders = [{
+                "pad": {"b": 10, "t": 60},
+                "len": 0.9,
+                "x": 0.1,
+                "y": 0,
+                "steps": [{
+                        "args": [[f.name], frame_args(0)],
+                        "label": str(k),
+                        "method": "animate",}
+                    for k, f in enumerate(fig.frames)
+                ],}]
+    
+    # Layout
+    fig.update_layout(
+             title='Ocupation',
+             updatemenus = [
+                {
+                    "buttons": [
+                        {
+                            "args": [None, frame_args(50)],
+                            "label": "&#9654;", # play symbol
+                            "method": "animate",
+                        },
+                        {
+                            "args": [[None], frame_args(0)],
+                            "label": "&#9724;", # pause symbol
+                            "method": "animate",
+                        },
+                    ],
+                    "direction": "left",
+                    "pad": {"r": 10, "t": 70},
+                    "type": "buttons",
+                    "x": 0.1,
+                    "y": 0,
+                }
+             ],
+             sliders=sliders
+    )
+    
     if use_inline:
-        matplotlib.use('module://matplotlib_inline.backend_inline')
+        fig.show()
     else:
-        matplotlib.use('Qt5Agg')
-
-    import matplotlib.pyplot as plt
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    ax.set_xlabel('Fecha')
-    ax.set_xticklabels(x_labels)
-    
-    ax.set_ylabel('')
-    ax.set_yticks(y_range)
-    ax.set_yticklabels(y_labels)
-    
-    ax.set_zlabel('Population %')
-
-    # Plot the surface.
-    surf = ax.plot_surface(X, Y, Z, cmap=plt.cm.viridis, alpha=1)
-    surf_aprox = ax.plot_surface(X, Y, best_curve, cmap=plt.cm.inferno, alpha=0.5)
-    
-    # Add a color bar which maps values to colors.
-    fig.colorbar(surf, shrink=0.5, aspect=5)
-    plt.show()
+        fig.show(renderer="browser")
