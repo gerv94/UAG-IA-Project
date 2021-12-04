@@ -233,14 +233,14 @@ def print_plots(x_range, y_range, original_curve, aprox_curve, aptitudes, c_valu
     X, Y = np.meshgrid(x_range, y_range)
     
     if use_plotly:
-        
         import plotly.graph_objects as go
         from plotly.subplots import make_subplots
         
-        # Initialize figure with 4 3D subplots
+        # Initialize figure with 4 subplots
         fig = make_subplots(
-            rows=1, cols=2,
-            specs=[[{'type': 'surface'}, {'type': 'xy'}]])
+            rows=2, cols=2,
+            specs=[[{'type': 'surface'}, {'type': 'xy'}],
+                   [{'type': 'xy'}, {'type': 'xy'}]])
         
         fig.add_trace(
             go.Surface(z=aprox_curve, x=X, y=Y, colorscale='viridis', opacity=0.75),
@@ -250,10 +250,17 @@ def print_plots(x_range, y_range, original_curve, aprox_curve, aptitudes, c_valu
             go.Surface(z=original_curve, x=X, y=Y),
             row=1, col=1)
         
-        fig.add_trace(
-            go.Scatter(x=np.arange(len(aptitudes)), y=aptitudes),
-            row=1, col=2)
-
+        fig.add_trace(go.Scatter(y=aptitudes), row=1, col=2)
+        
+        (mf1, mf2, mf3, mf4, mf5, mf6) = get_mf(x_range, y_range, c_values)
+        
+        fig.add_trace(go.Scatter(y=mf1), row=2, col=1)
+        fig.add_trace(go.Scatter(y=mf2), row=2, col=1)
+        fig.add_trace(go.Scatter(y=mf3), row=2, col=1)
+        
+        fig.add_trace(go.Scatter(y=mf4), row=2, col=2)
+        fig.add_trace(go.Scatter(y=mf5), row=2, col=2)
+        fig.add_trace(go.Scatter(y=mf6), row=2, col=2)
 
         #fig = go.Figure(data=[
         #    go.Surface(z=aprox_curve, x=X, y=Y, colorscale="viridis", opacity=0.5),
@@ -313,8 +320,8 @@ def print_plots(x_range, y_range, original_curve, aprox_curve, aptitudes, c_valu
         ax1.set_zlabel('Population %')
     
         # Plot the surface.
-        ax1.plot_surface(X, Y, original_curve, cmap=plt.cm.viridis, alpha=1)
-        ax1.plot_surface(X, Y, aprox_curve, cmap=plt.cm.viridis, alpha=0.75)
+        ax1.plot_surface(X, Y, original_curve, cmap=plt.cm.plasma, alpha=0.5)
+        ax1.plot_surface(X, Y, aprox_curve, cmap=plt.cm.viridis, alpha=0.5)
         
         # -------------- Aptitude curve
         ax2 = fig.add_subplot(2,2,2)
@@ -348,9 +355,7 @@ def print_plots(x_range, y_range, original_curve, aprox_curve, aptitudes, c_valu
         
         # Add a color bar which maps values to colors.
         #fig.colorbar(surf, shrink=0.5, aspect=5)
-        if use_inline:
-          display.clear_output(wait = True)
-        
+
         plt.show()
 
 ############### Read Original Data ###############
@@ -359,8 +364,8 @@ import numpy as np
 (x_range, y_range, x_labels, y_labels, X, Y, Z) = data_curve()
 
 # ----------------------------- Variable Initialization ----------------------------- 
-num_of_chromosomes = 100           # Equals to the number of chromosomes per population
-num_of_generations = 30            # Number of generations to reproduce
+num_of_chromosomes = 20           # Equals to the number of chromosomes per population
+num_of_generations = 20            # Number of generations to reproduce
 num_of_genes = 39                   # Equals to the number of genes
 percentage_of_opponents = 0.05      # Percentage of chromosomes from the population to compite
 weight = 255 / Z.max()              # To set a max value of our data
@@ -376,7 +381,8 @@ aptitudes = []
 best_chromosomes = []
 
 # Visualization variables
-use_inline = True
+use_plotly = True
+use_inline = False
 animate = False
 
 # ----------------------------- Program Start ----------------------------- 
@@ -395,7 +401,6 @@ for j in range(num_of_chromosomes):
 
 print('Start of competition')
 for i in range(num_of_generations):
-    print('Running generation', i + 1, 'of', num_of_generations)
     new_generation = []
     best_chromosome_of_generation = None
         
@@ -439,15 +444,18 @@ for i in range(num_of_generations):
     
     if use_inline:
         best_curve = curve(x_range, y_range, decoded_values(best_chromosome_of_generation['values'], weight))
-        print_plots(x_range, y_range, Z, best_curve, aptitudes, decoded_values(best_chromosome_of_generation['values'], weight), use_plotly=False, use_inline=use_inline)
+        display.clear_output(wait = True)
+        print_plots(x_range, y_range, Z, best_curve, aptitudes, decoded_values(best_chromosome_of_generation['values'], weight), use_plotly=use_plotly, use_inline=use_inline)
+        print('Generation', i + 1, 'of', num_of_generations)
+        print('Best:', best_chromosome_of_generation)
+        print('Decoded:', decoded_values(best_chromosome_of_generation['values'], weight))
+        display.clear_output(wait = True)
         
-    print('Generation', i + 1, 'of', num_of_generations)
-    print('Best:', best_chromosome_of_generation)
-    print('Decoded:', decoded_values(best_chromosome_of_generation['values'], weight))
     
     generation = new_generation
-    
-#print_plots(x_range, y_range, Z, best_curve, aptitudes, best_chromosome_of_generation, use_plotly=True, use_inline=False)
+
+best_curve = curve(x_range, y_range, decoded_values(best_chromosome_of_generation['values'], weight))
+print_plots(x_range, y_range, Z, best_curve, aptitudes, decoded_values(best_chromosome_of_generation['values'], weight), use_plotly=True, use_inline=use_inline)
 
 ############### Animate ###############
 if animate:
@@ -498,7 +506,7 @@ if animate:
                 {
                     "buttons": [
                         {
-                            "args": [None, frame_args(50)],
+                            "args": [None, frame_args(20)],
                             "label": "&#9654;", # play symbol
                             "method": "animate",
                         },
