@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-
-import sys
+import os
+import pickle
 import matplotlib
 import matplotlib.pyplot as plt
 from IPython import display
@@ -28,131 +28,93 @@ def curve(x_range, y_range, c):
     points = np.zeros((len(x_range), len(y_range)))
     X, Y = np.meshgrid(x_range, y_range)
     
-    # TODO: should this values come from chromosome?
     ##################################################
-    m1=c[0];
-    m2=c[1];
-    m3=c[2];
-    m4=c[3];
-    m5=c[4];
-    m6=c[5];
-    de1=c[6] or 0.01;
-    de2=c[7] or 0.01;
-    de3=c[8] or 0.01;
-    de4=c[9] or 0.01;
-    de5=c[10] or 0.01;
-    de6=c[11] or 0.01;
-    ##################################################
+    mx = []
+    my = []
+    dex = []
+    dey = []
+    p = []
+    q = []
+    r = []
+    for gen in c:
+        if len(mx) < x_curves:
+            mx.append(gen)
+        elif len(my) < y_curves:
+            my.append(gen)
+        elif len(dex) < x_curves:
+            dex.append(gen or 0.01)
+        elif len(dey) < y_curves:
+            dey.append(gen or 0.01)
+        elif len(p) < x_curves * y_curves:
+            p.append(gen)
+        elif len(q) < x_curves * y_curves:
+            q.append(gen)
+        elif len(r) < x_curves * y_curves:
+            r.append(gen)
     
-    p1=c[12];
-    p2=c[13];
-    p3=c[14];
-    p4=c[15];
-    p5=c[16];
-    p6=c[17];
-    p7=c[18];
-    p8=c[19];
-    p9=c[20];
-    
-    q1=c[21];
-    q2=c[22];
-    q3=c[23];
-    q4=c[24];
-    q5=c[25];
-    q6=c[26];
-    q7=c[27];
-    q8=c[28];
-    q9=c[29];
-    
-    r1=c[30];
-    r2=c[31];
-    r3=c[32];
-    r4=c[33];
-    r5=c[34];
-    r6=c[35];
-    r7=c[36];
-    r8=c[37];
-    r9=c[38];
-
     for x in x_range:
         x_temp = x / x_range[-1];
         for y in y_range:
             y_temp = y / y_range[-1];
             
-            mf1 = np.exp(( -(x_temp - m1)**2) / (2 * de1**2))
-            mf2 = np.exp(( -(x_temp - m2)**2) / (2 * de2**2))
-            mf3 = np.exp(( -(x_temp - m3)**2) / (2 * de3**2))
-            mf4 = np.exp(( -(y_temp - m4)**2) / (2 * de4**2))
-            mf5 = np.exp(( -(y_temp - m5)**2) / (2 * de5**2))
-            mf6 = np.exp(( -(y_temp - m6)**2) / (2 * de6**2))
-              
-            inf1 = mf1 * mf4
-            inf2 = mf1 * mf5
-            inf3 = mf1 * mf6
-            inf4 = mf2 * mf4
-            inf5 = mf2 * mf5
-            inf6 = mf2 * mf6
-            inf7 = mf3 * mf4
-            inf8 = mf3 * mf5
-            inf9 = mf3 * mf6
-              
-            reg1 = inf1 * (p1 * x_temp + q1 * y_temp + r1)
-            reg2 = inf2 * (p2 * x_temp + q2 * y_temp + r2)
-            reg3 = inf3 * (p3 * x_temp + q3 * y_temp + r3)
-            reg4 = inf4 * (p4 * x_temp + q4 * y_temp + r4)
-            reg5 = inf5 * (p5 * x_temp + q5 * y_temp + r5)
-            reg6 = inf6 * (p6 * x_temp + q6 * y_temp + r6)
-            reg7 = inf7 * (p7 * x_temp + q7 * y_temp + r7)
-            reg8 = inf8 * (p8 * x_temp + q8 * y_temp + r8)
-            reg9 = inf9 * (p9 * x_temp + q9 * y_temp + r9)
-              
-            b = inf1 + inf2 + inf3 + inf4 + inf5 + inf6 + inf7 + inf8 + inf9
-            a = reg1 + reg2 + reg3 + reg4 + reg5 + reg6 + reg7 + reg8 + reg9
+            mfx = []
+            mfy = []
+            for i in range(x_curves):
+                mfx.append(np.exp(( -(x_temp - mx[i])**2) / (2 * dex[i]**2)))
+            for i in range(y_curves):
+                mfy.append(np.exp(( -(y_temp - my[i])**2) / (2 * dey[i]**2)))
+            
+            inf = []
+            reg = []
+            for i in range(x_curves):
+                for j in range(y_curves):
+                    inf_val = mfx[i] * mfy[j]
+                    inf.append(inf_val)
+                    item = (i * x_curves) + j
+                    reg.append(inf_val * (p[item] * x_temp + q[item] * y_temp + r[item]))
+
+            a = sum(reg)
+            b = sum(inf)
             
             points[x, y] = (a / b)
 
     return points[X, Y]
 
 def get_mf(x_range, y_range, c):
-    m1=c[0];
-    m2=c[1];
-    m3=c[2];
-    m4=c[3];
-    m5=c[4];
-    m6=c[5];
-    de1=c[6] or 0.01;
-    de2=c[7] or 0.01;
-    de3=c[8] or 0.01;
-    de4=c[9] or 0.01;
-    de5=c[10] or 0.01;
-    de6=c[11] or 0.01;
     
-    mf1 = []
-    mf2 = []
-    mf3 = []
-    mf4 = []
-    mf5 = []
-    mf6 = []
+    ##################################################
+    mx = []
+    my = []
+    dex = []
+    dey = []
+    for gen in c:
+        if len(mx) < x_curves:
+            mx.append(gen)
+        elif len(my) < y_curves:
+            my.append(gen)
+        elif len(dex) < x_curves:
+            dex.append(gen or 0.01)
+        elif len(dey) < y_curves:
+            dey.append(gen or 0.01)
+
+    mfx = np.zeros((x_curves, len(x_range)))
+    mfy = np.zeros((y_curves, len(y_range)))
+    
     for x in x_range:
         x_temp = x / x_range[-1];
-        
-        mf1.append(np.exp(( -(x_temp - m1)**2) / (2 * de1**2)))
-        mf2.append(np.exp(( -(x_temp - m2)**2) / (2 * de2**2)))
-        mf3.append(np.exp(( -(x_temp - m3)**2) / (2 * de3**2)))
-        
+        for i in range(x_curves):
+            mfx[i][x] = np.exp(( -(x_temp - mx[i])**2) / (2 * dex[i]**2))
+            
     for y in y_range:
         y_temp = y / y_range[-1];
-        
-        mf4.append(np.exp(( -(y_temp - m4)**2) / (2 * de4**2)))
-        mf5.append(np.exp(( -(y_temp - m5)**2) / (2 * de5**2)))
-        mf6.append(np.exp(( -(y_temp - m6)**2) / (2 * de6**2)))
-
-    return (mf1, mf2, mf3, mf4, mf5, mf6)
+        for i in range(y_curves):
+            mfy[i][y] = np.exp(( -(y_temp - my[i])**2) / (2 * dey[i]**2))
+    
+    return (mfx, mfy)
 
 # Returns the chromsomes values decoded by w
 def decoded_values(chromosome_values, w):
-    return [x / 255 for x in chromosome_values[:6]] \
-        + [x / 255 for x in chromosome_values[6:12]] \
+    return [x / 255 for x in chromosome_values[:12]] \
         + [x / w for x in chromosome_values[12:]]
 
 # Sets the aptitude value of a chromosome (Area between the curve and the original curve)
@@ -252,20 +214,11 @@ def print_plots(x_range, y_range, original_curve, aprox_curve, aptitudes, c_valu
         
         fig.add_trace(go.Scatter(y=aptitudes), row=1, col=2)
         
-        (mf1, mf2, mf3, mf4, mf5, mf6) = get_mf(x_range, y_range, c_values)
-        
-        fig.add_trace(go.Scatter(y=mf1), row=2, col=1)
-        fig.add_trace(go.Scatter(y=mf2), row=2, col=1)
-        fig.add_trace(go.Scatter(y=mf3), row=2, col=1)
-        
-        fig.add_trace(go.Scatter(y=mf4), row=2, col=2)
-        fig.add_trace(go.Scatter(y=mf5), row=2, col=2)
-        fig.add_trace(go.Scatter(y=mf6), row=2, col=2)
-
-        #fig = go.Figure(data=[
-        #    go.Surface(z=aprox_curve, x=X, y=Y, colorscale="viridis", opacity=0.5),
-        #    go.Surface(z=original_curve, x=X, y=Y, colorscale="viridis", opacity=1)
-        #    ])
+        (mfx, mfy) = get_mf(x_range, y_range, c_values)
+        for mf in mfx:
+            fig.add_trace(go.Scatter(y=mf), row=2, col=1)
+        for mf in mfy:
+            fig.add_trace(go.Scatter(y=mf), row=2, col=2)
 
         fig.update_layout(title = 'Ocupation',
                           autosize = True,
@@ -334,21 +287,19 @@ def print_plots(x_range, y_range, original_curve, aprox_curve, aptitudes, c_valu
         ax2.title.set_text("Aptitude: {:.2f}".format(aptitudes[i]))
         
         # -------------- Aptitude curve
-        (mf1, mf2, mf3, mf4, mf5, mf6) = get_mf(x_range, y_range, c_values)
+        (mfx, mfy) = get_mf(x_range, y_range, c_values)
         ax3 = fig.add_subplot(2,2,3)
         ax3.clear()
-        ax3.plot(mf1, linewidth=2, label='mf1', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
-        ax3.plot(mf2, linewidth=2, label='mf2', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
-        ax3.plot(mf3, linewidth=2, label='mf3', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
+        for item in range(len(mfx)):
+            ax3.plot(mfx[item], linewidth=2, label='mfx{}'.format(item), path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
         ax3.set_xlabel('Fecha (x)')
         ax3.set_ylabel('Population (z)')
         ax3.legend()
         
         ax4 = fig.add_subplot(2,2,4)
         ax4.clear()
-        ax4.plot(mf4, linewidth=2, label='mf4', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
-        ax4.plot(mf5, linewidth=2, label='mf5', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
-        ax4.plot(mf6, linewidth=2, label='mf6', path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
+        for item in range(len(mfy)):
+            ax4.plot(mfy[item], linewidth=2, label='mfy{}'.format(item), path_effects=[path_effects.SimpleLineShadow(), path_effects.Normal()])
         ax4.set_xlabel('Clases (y)')
         ax4.set_ylabel('Population (z)')
         ax4.legend()
@@ -364,25 +315,38 @@ import numpy as np
 (x_range, y_range, x_labels, y_labels, X, Y, Z) = data_curve()
 
 # ----------------------------- Variable Initialization ----------------------------- 
-num_of_chromosomes = 20           # Equals to the number of chromosomes per population
-num_of_generations = 20            # Number of generations to reproduce
-num_of_genes = 39                   # Equals to the number of genes
+num_of_chromosomes = 100            # Equals to the number of chromosomes per population
+num_of_generations = 100            # Number of generations to reproduce
+
+                                    # Equals to the number of genes
+x_curves = 3
+y_curves = 3
+num_of_genes = 3 * x_curves * y_curves + 2 * y_curves + 2 * x_curves
 percentage_of_opponents = 0.05      # Percentage of chromosomes from the population to compite
-weight = 255 / Z.max()              # To set a max value of our data
+weight = 255 / (Z.max() * 1.1)      # To set a max value of our data
 tries = 10
 
 # Mutation/Elitism variables
 allow_mutation = True
-mutation_percentage = 0.1
+mutation_percentage = 0.2
 allow_elitism = True
 
 # History variables
 aptitudes = []
 best_chromosomes = []
+previous_generation = []
+load_previous = False
+    
+# Load history state
+history_file = 'history.pth'
+if load_previous and os.path.exists(history_file):
+    with open(history_file, 'rb') as fp:   # Unpickling
+        print('Loaded previous state')
+        (aptitudes, best_chromosomes, previous_generation) = pickle.load(fp)
 
 # Visualization variables
-use_plotly = True
-use_inline = False
+use_plotly = False
+use_inline = True
 animate = False
 
 # ----------------------------- Program Start ----------------------------- 
@@ -392,8 +356,11 @@ print('Matplotlib backend:' + matplotlib.get_backend())
 # ::::: Parte 1: Generación inicial :::::
 # Llenado pseudoaleatorio sin repetición
 # Tratamos de trabajar con numeros de 8 bits max value 255
-random_chromosome(255, num_of_genes)
-generation = [ random_chromosome(255, num_of_genes) for i in range(num_of_chromosomes) ] # Equals to the full population
+generation = []
+if load_previous and previous_generation:
+    generation = previous_generation
+else:
+    generation = [ random_chromosome(255, num_of_genes) for i in range(num_of_chromosomes) ] # Equals to the full population
 
 # Calculate aptitudes
 for j in range(num_of_chromosomes):
@@ -450,12 +417,20 @@ for i in range(num_of_generations):
         print('Best:', best_chromosome_of_generation)
         print('Decoded:', decoded_values(best_chromosome_of_generation['values'], weight))
         display.clear_output(wait = True)
+    else:
+        print('Generation', i + 1, 'of', num_of_generations)
+        print('Best:', best_chromosome_of_generation)
+        print('Decoded:', decoded_values(best_chromosome_of_generation['values'], weight))
         
     
     generation = new_generation
 
+# Store history state
+with open(history_file, 'wb') as fp:
+    pickle.dump((aptitudes, best_chromosomes, generation), fp)
+    
 best_curve = curve(x_range, y_range, decoded_values(best_chromosome_of_generation['values'], weight))
-print_plots(x_range, y_range, Z, best_curve, aptitudes, decoded_values(best_chromosome_of_generation['values'], weight), use_plotly=True, use_inline=use_inline)
+print_plots(x_range, y_range, Z, best_curve, aptitudes, decoded_values(best_chromosome_of_generation['values'], weight), use_plotly=True, use_inline=False)
 
 ############### Animate ###############
 if animate:
