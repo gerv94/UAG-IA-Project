@@ -323,7 +323,7 @@ x_curves = 3
 y_curves = 3
 num_of_genes = 3 * x_curves * y_curves + 2 * y_curves + 2 * x_curves
 percentage_of_opponents = 0.05      # Percentage of chromosomes from the population to compite
-weight = 255 / (Z.max() * 1.1)      # To set a max value of our data
+weight = 255 / (original_curve.max() * 1.1)      # To set a max value of our data
 tries = 10
 
 # Mutation/Elitism variables
