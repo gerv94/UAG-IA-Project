@@ -239,7 +239,7 @@ def print_plots(x_range, y_range, original_curve, aptitudes, c_values, use_plotl
             subplot_titles=("Ocupation", "Aptitude: {:.2f}".format(aptitudes[-1]), "mfx", "mfy"),
             specs=[[{'type': 'surface'}, {'type': 'xy'}],
                    [{'type': 'xy'}, {'type': 'xy'}]])
-
+        
         fig.add_trace(
             go.Surface(z=aprox_curve, x=X, y=Y, colorscale='viridis', opacity=0.75, showscale=False),
             row=1, col=1)
@@ -359,7 +359,7 @@ original_mesh_curve = original_curve[X,Y]
 
 # ----------------------------- Variable Initialization ----------------------------- 
 num_of_chromosomes = 100            # Equals to the number of chromosomes per population
-num_of_generations = 10            # Number of generations to reproduce
+num_of_generations = 800            # Number of generations to reproduce
                                     # Equals to the number of genes
 x_curves = 3
 y_curves = 3
@@ -380,7 +380,7 @@ previous_generation = []
 load_previous = True
 save_state = True
 check_point = 10
-     
+
 # Load history state
 history_file = 'history_{}_{}_{}.pth'.format(x_curves, y_curves, num_of_chromosomes)
 if load_previous and os.path.exists(history_file):
