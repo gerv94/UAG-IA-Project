@@ -236,27 +236,37 @@ def print_plots(x_range, y_range, original_curve, aptitudes, c_values, use_plotl
         # Initialize figure with 4 subplots
         fig = make_subplots(
             rows=2, cols=2,
+            subplot_titles=("Ocupation", "Aptitude: {:.2f}".format(aptitudes[-1]), "mfx", "mfy"),
             specs=[[{'type': 'surface'}, {'type': 'xy'}],
                    [{'type': 'xy'}, {'type': 'xy'}]])
-        
+
         fig.add_trace(
-            go.Surface(z=aprox_curve, x=X, y=Y, colorscale='viridis', opacity=0.75),
+            go.Surface(z=aprox_curve, x=X, y=Y, colorscale='viridis', opacity=0.75, showscale=False),
             row=1, col=1)
         
         fig.add_trace(
-            go.Surface(z=original_curve, x=X, y=Y),
+            go.Surface(z=original_curve, x=X, y=Y, showscale=False),
             row=1, col=1)
         
-        fig.add_trace(go.Scatter(y=aptitudes), row=1, col=2)
+        
+        fig.add_trace(go.Scatter(y=aptitudes, name='Aptitude of generation {}'.format(len(aptitudes)), legendgroup = '2'), row=1, col=2)
         
         (mfx, mfy) = get_mf(x_range_new, y_range_new, c_values)
-        for mf in mfx:
-            fig.add_trace(go.Scatter(y=mf, x=x_range_new), row=2, col=1)
-        for mf in mfy:
-            fig.add_trace(go.Scatter(y=mf, x=y_range_new), row=2, col=2)
+        for item in range(len(mfx)):
+            fig.add_trace(go.Scatter(y=mfx[item], x=x_range_new, name='mfx{}'.format(item), legendgroup = '3'), row=2, col=1)
+        for item in range(len(mfy)):
+            fig.add_trace(go.Scatter(y=mfy[item], x=y_range_new, name='mfy{}'.format(item), legendgroup = '3'), row=2, col=2)
 
-        fig.update_layout(title = 'Ocupation',
-                          autosize = True,
+        fig.update_xaxes(title_text="Generation", row=1, col=2)
+        fig.update_xaxes(title_text="Fecha (x)", row=2, col=1)
+        fig.update_xaxes(title_text="Clases (y)", row=2, col=2)
+        
+        fig.update_yaxes(title_text="Aptitude", row=1, col=2)
+        fig.update_yaxes(title_text="Population (z)", row=2, col=1)
+        fig.update_yaxes(title_text="Population (z)", row=2, col=2)
+
+        fig.update_layout(autosize = True,
+                          legend_tracegroupgap = 680,
                           margin = dict(l=65, r=50, b=65, t=90),
                           scene = dict(
                               xaxis = dict(
@@ -349,7 +359,7 @@ original_mesh_curve = original_curve[X,Y]
 
 # ----------------------------- Variable Initialization ----------------------------- 
 num_of_chromosomes = 100            # Equals to the number of chromosomes per population
-num_of_generations = 800            # Number of generations to reproduce
+num_of_generations = 10            # Number of generations to reproduce
                                     # Equals to the number of genes
 x_curves = 3
 y_curves = 3
@@ -370,7 +380,7 @@ previous_generation = []
 load_previous = True
 save_state = True
 check_point = 10
-    
+     
 # Load history state
 history_file = 'history_{}_{}_{}.pth'.format(x_curves, y_curves, num_of_chromosomes)
 if load_previous and os.path.exists(history_file):
@@ -379,7 +389,7 @@ if load_previous and os.path.exists(history_file):
         (aptitudes, best_chromosomes, previous_generation) = pickle.load(fp)
 
 # Visualization variables
-use_plotly = False
+use_plotly = True
 use_inline = False
 animate = False
 
@@ -472,7 +482,7 @@ if save_state:
         pickle.dump((aptitudes, best_chromosomes, generation), fp)
     print('Checkpoint stored!')
     
-print_plots(x_range, y_range, original_mesh_curve, aptitudes, decoded_values(best_chromosome_of_generation['values'], weight), use_plotly=False, use_inline=running_colab)
+print_plots(x_range, y_range, original_mesh_curve, aptitudes, decoded_values(best_chromosome_of_generation['values'], weight), use_plotly=use_plotly, use_inline=running_colab)
 
 ############### Animate ###############
 if animate:    
